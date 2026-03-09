@@ -228,24 +228,25 @@ function StatusRail({status}){
 async function callAI(b64){
   let raw="";
   try{
-    const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
-      model:"claude-sonnet-4-20250514",
-      max_tokens:1500,
-      messages:[{role:"user",content:[
-        {type:"image",source:{type:"base64",media_type:"image/jpeg",data:b64}},
-        {type:"text",text:`Analyze this image for waste and trash items. You MUST reply with only a JSON object, nothing else — no explanation, no markdown fences. Use this exact shape:
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyChgOuHxTYsBMlqt89W-9muRBOaea3T0nE`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        contents:[{parts:[
+          {inline_data:{mime_type:"image/jpeg",data:b64}},
+          {text:`Analyze this image for waste and trash items. Reply with only a JSON object, no explanation, no markdown. Use this exact shape:
 {"wasteType":"string","primaryCategory":"General Waste","tags":["a","b"],"reusable":false,"recyclable":true,"compostable":false,"hazardLevel":"Low","disposalSteps":["step1"],"environmentalImpact":"string","recommendedFacilityType":"Recycling Centre","confidence":"High","sceneDescription":"string","estimatedVolume":"Medium (1-5 bags)","trashItems":[{"name":"string","category":"Plastic","recyclable":true,"quantity":"few","notes":"string"}]}`}
-      ]}]}
-    )});
+        ]}]
+      })
+    });
     const d=await r.json();
-    if(d.error) throw new Error(d.error.message||`API error: ${JSON.stringify(d.error)}`);
-    if(!d.content?.length) throw new Error(`Empty response. Full reply: ${JSON.stringify(d)}`);
-    raw=(d.content.map(b=>b.type==="text"?b.text:"").join("")).trim();
+    if(d.error) throw new Error(d.error.message);
+    raw=d.candidates?.[0]?.content?.parts?.[0]?.text||"";
     const match=raw.match(/\{[\s\S]*\}/);
-    if(!match) throw new Error(`No JSON object found. Model said: ${raw.slice(0,300)}`);
+    if(!match) throw new Error(`No JSON found. Model said: ${raw.slice(0,300)}`);
     return JSON.parse(match[0]);
   }catch(err){
-    throw new Error(err.message||(raw?`Parse failed on: ${raw.slice(0,200)}`:"Unknown error"));
+    throw new Error(err.message||"Unknown error");
   }
 }
 
