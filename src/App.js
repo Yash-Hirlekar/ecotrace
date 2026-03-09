@@ -228,7 +228,7 @@ function StatusRail({status}){
 async function callAI(b64){
   let raw="";
   try{
-    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyChgOuHxTYsBMlqt89W-9muRBOaea3T0nE`,{
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyChgOuHxTYsBMlqt89W-9muRBOaea3T0nE`,{
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({
