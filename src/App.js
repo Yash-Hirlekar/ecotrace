@@ -228,26 +228,46 @@ function StatusRail({status}){
 async function callAI(b64){
   let raw="";
   try{
-    const r=await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=AIzaSyBLQykj9_zBkt4NjXpriFQ6atisi-0SciA`,{
+    console.log(process.env.REACT_APP_GEMINI_KEY);
+    const r=await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${process.env.REACT_APP_GEMINI_KEY}`,{
       method:"POST",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({
         contents:[{parts:[
           {inline_data:{mime_type:"image/jpeg",data:b64}},
-          {text:`Analyze this image for waste and trash items. Reply with only a JSON object, no explanation, no markdown. Use this exact shape:
-{"wasteType":"string","primaryCategory":"General Waste","tags":["a","b"],"reusable":false,"recyclable":true,"compostable":false,"hazardLevel":"Low","disposalSteps":["step1"],"environmentalImpact":"string","recommendedFacilityType":"Recycling Centre","confidence":"High","sceneDescription":"string","estimatedVolume":"Medium (1-5 bags)","trashItems":[{"name":"string","category":"Plastic","recyclable":true,"quantity":"few","notes":"string"}]}`}
+          {text:`Analyze this image for waste and trash items. Reply with only a JSON object.`}
         ]}]
       })
     });
+
     const d=await r.json();
     if(d.error) throw new Error(d.error.message);
-    raw=d.candidates?.[0]?.content?.parts?.[0]?.text||"";
+
+    raw=d.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
     const match=raw.match(/\{[\s\S]*\}/);
-    if(!match) throw new Error(`No JSON found. Model said: ${raw.slice(0,300)}`);
+    if(!match) throw new Error(`No JSON found`);
+
     return JSON.parse(match[0]);
+
   }catch(err){
-    throw new Error(err.message||"Unknown error");
+    throw new Error(err.message || "Unknown error");
   }
+}
+
+function fileToBase64(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.readAsDataURL(file);
+
+    reader.onload=()=>{
+      const base64=reader.result.split(",")[1];
+      resolve(base64);
+    };
+
+    reader.onerror=error=>reject(error);
+  });
 }
 
 /* ── TRASH IDENTIFIER PANEL ─────────────────── */
